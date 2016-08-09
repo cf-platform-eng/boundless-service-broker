@@ -1,5 +1,17 @@
 {
   "geoserver_docker_cred": { "key" : "test" }, 
-  "geoserver_name":"boundless-server-test",
-  "geoserver_route": "boundless-server-test"
+  "geoserver_name":"boundless-server",
+  "geoserver_route": "boundless-server",
+  "geoserver_instances": 1,
+  "geoserver_memory": 1612,
+  "geoserver_disk": 1512,
+  "geoserver_docker_image": "cuttlefish/geoserver:4.8",
+  "geoserver_environment" : { "envName": "envserverValue", "OPTS" : " -Dname=value testGeoFlag " },
+  "geocache_name":"boundless-gwc",
+  "geocache_route": "boundless-gwc",
+  "geocache_instances": 1,
+  "geocache_memory": 1612,
+  "geocache_disk": 1512,
+  "geocache_docker_image": "cuttlefish/gwc:4.8",
+  "geocache_environment" : { "envName": "envcacheValue", "OPTS" : " -Dname=value testCacheFlag " }
 }
