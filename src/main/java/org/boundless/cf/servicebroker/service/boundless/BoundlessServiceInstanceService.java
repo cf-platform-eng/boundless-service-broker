@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
 @Service
 public class BoundlessServiceInstanceService implements ServiceInstanceService {
@@ -48,7 +49,7 @@ public class BoundlessServiceInstanceService implements ServiceInstanceService {
 	@Value("${contact.organization:PIVOTAL}")
     private String envContactOrg;
 
-	@Value("${gwc.service.provider}")
+	@Value("${gwc.service.provider:null}")
     private String gwcServiceProvider;
 	
 	@Autowired
@@ -272,10 +273,12 @@ public class BoundlessServiceInstanceService implements ServiceInstanceService {
 		BoundlessAppResource geoWebCacheAppResource = boundlessSIMetadata.getResource(BoundlessAppResourceConstants.GWC_TYPE);
 		BoundlessAppResource geoServerAppResource = boundlessSIMetadata.getResource(BoundlessAppResourceConstants.GEOSERVER_TYPE);
 		
-		geoServerAppResource.addToEnvironment(BoundlessAppResourceConstants.CONSUL_HOST, this.getConsulHost());
-		geoServerAppResource.addToEnvironment(BoundlessAppResourceConstants.CONSUL_PORT, this.getConsulPort());
-		geoWebCacheAppResource.addToEnvironment(BoundlessAppResourceConstants.CONSUL_HOST, this.getConsulHost());
-		geoWebCacheAppResource.addToEnvironment(BoundlessAppResourceConstants.CONSUL_PORT, this.getConsulPort());
+		if (this.getConsulHost() != null) {
+			geoServerAppResource.addToEnvironment(BoundlessAppResourceConstants.CONSUL_HOST, this.getConsulHost());
+			geoServerAppResource.addToEnvironment(BoundlessAppResourceConstants.CONSUL_PORT, this.getConsulPort());
+			geoWebCacheAppResource.addToEnvironment(BoundlessAppResourceConstants.CONSUL_HOST, this.getConsulHost());
+			geoWebCacheAppResource.addToEnvironment(BoundlessAppResourceConstants.CONSUL_PORT, this.getConsulPort());
+		}
 		
 		// Add Service Instance name
 		String serviceInstanceGuid = serviceInstance.getId();
@@ -329,12 +332,12 @@ public class BoundlessServiceInstanceService implements ServiceInstanceService {
 			serviceBindInstanceId = CFAppManager.requestCreateServiceBinding( cfClient, appId, serviceInstanceId);
 			
 			// Need a get() on function call to really execute the logic in Reactive
-			return serviceBindInstanceId.get();
+			return serviceBindInstanceId.block();
 		
 		} catch(Exception e) {
 			// In case of any errors, clean up the instance created earlier.
 			if (serviceInstanceId != null) {
-				CFAppManager.requestDeleteServiceInstance(cfClient, serviceInstanceId.get(Duration.ofMinutes(15)));
+				CFAppManager.requestDeleteServiceInstance(cfClient, serviceInstanceId.block(Duration.ofMinutes(15)));
 			}
 			return null;
 		}
@@ -346,11 +349,11 @@ public class BoundlessServiceInstanceService implements ServiceInstanceService {
 	 */
 	private void unbindAndDeleteGWCService(String serviceBindInstanceId) {
 		
-		String serviceInstanceId = CFAppManager.requestGetServiceInstanceFromBinding(cfClient, serviceBindInstanceId).get();
-		CFAppManager.requestDeleteServiceBinding(cfClient, serviceBindInstanceId).get();
+		String serviceInstanceId = CFAppManager.requestGetServiceInstanceFromBinding(cfClient, serviceBindInstanceId).block();
+		CFAppManager.requestDeleteServiceBinding(cfClient, serviceBindInstanceId).block();
 		
 		if (serviceInstanceId != null) {			
-			CFAppManager.requestDeleteServiceInstance(cfClient, serviceInstanceId).get();
+			CFAppManager.requestDeleteServiceInstance(cfClient, serviceInstanceId).block();
 		}
 	}
 
@@ -373,7 +376,7 @@ public class BoundlessServiceInstanceService implements ServiceInstanceService {
     		// instead of going with the service instance org/space guids.
       		if (boundlessSIMetadata.isTargetOrgDefined()) {
       			String org = boundlessSIMetadata.getOrg();
-        		orgGuid = CFAppManager.requestOrganizationId(cfClient, org).get();
+        		orgGuid = CFAppManager.requestOrganizationId(cfClient, org).block();
         		boundlessSIMetadata.setOrgGuid(orgGuid);
     		}
     		
@@ -382,19 +385,19 @@ public class BoundlessServiceInstanceService implements ServiceInstanceService {
     			spaceGuid = CFAppManager.requestSpaceId(cfClient, 
     					boundlessSIMetadata.getOrgGuid(), 
     					boundlessSIMetadata.getSpace()
-    					).get();
+    					).block();
 				boundlessSIMetadata.setSpaceGuid(spaceGuid);
     		}
     		
     		// Look up the domain Guid either based on provided domain name or very first available domain.
     		String domainGuid = CFAppManager.requestDomainId(cfClient, 
     				boundlessSIMetadata.getDomain()
-    				).get();
+    				).block();
     		boundlessSIMetadata.setDomainGuid(domainGuid);
 
     		// Whether we went with the specified domain or default domain,
     		// fill the domain name by requesting for domain details using the previously obtained domainId.
-    		boundlessSIMetadata.setDomain(CFAppManager.requestDomainName(cfClient, domainGuid).get());
+    		boundlessSIMetadata.setDomain(CFAppManager.requestDomainName(cfClient, domainGuid).block());
    		
     		// Update Env variables for app instances
     		updateEnvVariablesForInstance(serviceInstance);
@@ -409,7 +412,7 @@ public class BoundlessServiceInstanceService implements ServiceInstanceService {
 		    	// Need a get() on function call to really execute the logic in Reactive
 		    	BoundlessAppResource resource = boundlessSIMetadata.getResource(resourceType);
 		    	
-	    		reactor.core.tuple.Tuple2<String, String> resultPair = CFAppManager.push(cfClient, appMetadata).get(Duration.ofMinutes(15)); 
+	    		Tuple2<String, String> resultPair = CFAppManager.push(cfClient, appMetadata).block(Duration.ofMinutes(15)); 
 		    	if (resultPair != null) {
 		    		String appId = resultPair.t1;
 		    		String routeId = resultPair.t2;
@@ -450,7 +453,7 @@ public class BoundlessServiceInstanceService implements ServiceInstanceService {
 	    	AppMetadataDTO appMetadata = boundlessSIMetadata.generateAppMetadata(resourceType);
 	    	if (appMetadata != null && appMetadata.getInstances() > 0) {
 	    		// Need a get() on function call to really execute the logic in Reactive
-	    		CFAppManager.update(cfClient, appMetadata).get(Duration.ofMinutes(15));
+	    		CFAppManager.update(cfClient, appMetadata).block(Duration.ofMinutes(15));
 	    	}
     	}
     	
@@ -482,8 +485,8 @@ public class BoundlessServiceInstanceService implements ServiceInstanceService {
 	    		// We might not have the complete app or route guid filled in case of error during app push,
 	    		// Just clean up whatever is left over - do it separately for route & app
 	    		// Need a get() on function call to really execute the logic in Reactive
-	    		CFAppManager.deleteRoute(cfClient, resource.getRouteGuid()).get(Duration.ofMinutes(15));
-	    		CFAppManager.deleteApplications(cfClient, boundlessSIMetadata.getSpaceGuid(), resource.getAppName()).get(Duration.ofMinutes(15));	    		
+	    		CFAppManager.deleteRoute(cfClient, resource.getRouteGuid()).block(Duration.ofMinutes(15));
+	    		CFAppManager.deleteApplications(cfClient, boundlessSIMetadata.getSpaceGuid(), resource.getAppName()).block(Duration.ofMinutes(15));	    		
 	    	}
     	}
     	boundlessAppRepository.delete(boundlessSIMetadata);

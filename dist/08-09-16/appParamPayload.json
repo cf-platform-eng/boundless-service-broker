@@ -1,0 +1,5 @@
+{
+  "geoserver_docker_cred": { "key" : "test" }, 
+  "geoserver_name":"boundless-server-test",
+  "geoserver_route": "boundless-server-test"
+}

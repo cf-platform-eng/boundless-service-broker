@@ -29,13 +29,12 @@ import org.apache.log4j.Logger;
 import org.boundless.cf.servicebroker.model.dto.AppMetadataDTO;
 import org.cloudfoundry.client.CloudFoundryClient;
 import org.cloudfoundry.client.v2.applications.CreateApplicationRequest;
-import org.cloudfoundry.client.v2.applications.CreateApplicationRequest.CreateApplicationRequestBuilder;
+import org.cloudfoundry.client.v2.applications.CreateApplicationRequest.Builder;
 import org.cloudfoundry.client.v2.applications.DeleteApplicationRequest;
 import org.cloudfoundry.client.v2.applications.ListApplicationsRequest;
 import org.cloudfoundry.client.v2.applications.SummaryApplicationRequest;
 import org.cloudfoundry.client.v2.applications.SummaryApplicationResponse;
 import org.cloudfoundry.client.v2.applications.UpdateApplicationRequest;
-import org.cloudfoundry.client.v2.applications.UpdateApplicationRequest.UpdateApplicationRequestBuilder;
 import org.cloudfoundry.client.v2.domains.DomainResource;
 import org.cloudfoundry.client.v2.domains.GetDomainRequest;
 import org.cloudfoundry.client.v2.domains.ListDomainsRequest;
@@ -60,7 +59,7 @@ import org.reactivestreams.Publisher;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.tuple.Tuple2;
+import reactor.util.function.Tuple2;
 
 
 
@@ -257,7 +256,7 @@ public class CFAppManager {
     				.log("stream.preDeleteApp")
     				.and(deleteApplications(cloudFoundryClient, spaceId, application))
 	        		.log("stream.postDeleteApps")
-	    			.after()
+	    			.then()
     		)
     		.otherwise(throwable -> {
     			log.error("Error with app or route deletion..." + throwable);
@@ -278,7 +277,7 @@ public class CFAppManager {
                 .then( l -> cloudFoundryClient.applicationsV2()
                 			.delete(request)
                 			.log("stream.postDeleteApp"))
-                .after();
+                .then();
     }
 
     public static Mono<Void> deleteApplications(CloudFoundryClient cloudFoundryClient, String spaceId, String application) {
@@ -287,7 +286,7 @@ public class CFAppManager {
                 .log("stream.postListAppIds")
                 .flatMap(applicationId -> deleteApplication(cloudFoundryClient, applicationId))
                 .log("stream.postDeleteApps")
-                .after();
+                .then();
     }
 
     private static Publisher<String> listApplicationIds(CloudFoundryClient cloudFoundryClient, String spaceId, String applicationId) {
@@ -349,7 +348,7 @@ public class CFAppManager {
 											        		String startCommand, 
 											        		Map<String, Object> envJson,
 															Map<String, String> dockerCredsJson) {
-    	CreateApplicationRequestBuilder builder = CreateApplicationRequest.builder()
+    	CreateApplicationRequest.Builder builder = CreateApplicationRequest.builder()
                 .dockerImage(dockerImage)
                 .name(application)
                 .spaceId(spaceId)
@@ -396,7 +395,7 @@ public class CFAppManager {
 											        		Map<String, Object> envJson,
 											        		Map<String, String> dockerCredsJson) {
 
-    	UpdateApplicationRequestBuilder builder = UpdateApplicationRequest.builder()
+    	UpdateApplicationRequest.Builder builder = UpdateApplicationRequest.builder()
                 .dockerImage(dockerImage)
                 .instances(instances)
                 .memory(memoryQuota)
@@ -417,7 +416,7 @@ public class CFAppManager {
         return cloudFoundryClient.applicationsV2().update(request)
                 .map(response -> response.getMetadata().getId())
                 .log("stream.requestCompleteUpdateApp")
-                .after();
+                .then();
     }
 
     private static Mono<String> requestCreateRouteId(CloudFoundryClient cloudFoundryClient, String domainId, String spaceId, String host) {
@@ -442,7 +441,7 @@ public class CFAppManager {
     	
     	return cloudFoundryClient.routes().delete(request)
                 .log("stream.DeleteRoute")
-                .after();	
+                .then();	
     }
 
     private static Mono<DomainResource> requestDomain(CloudFoundryClient cloudFoundryClient, String domain) {
@@ -521,7 +520,7 @@ public class CFAppManager {
 			endResponse = cloudFoundryClient.applicationsV2().summary(request)
     		   .log("stream.checkAppStaging")
     		   .map(response -> response)
-    		   .get();
+    		   .block();
 		} while (!endResponse.getPackageState().equals(STAGED_STATE) && trials < RETRY_LIMIT);
 		
 		log.info("App: " + applicationId + " in packaging state: " + endResponse.getPackageState() + ", after " + trials + " trials" );
@@ -530,19 +529,19 @@ public class CFAppManager {
     }
     
     public static Mono<Void> requestDeleteServiceBinding(CloudFoundryClient cloudFoundryClient, String serviceBindingId) {
-		return cloudFoundryClient.serviceBindings()
+		return cloudFoundryClient.serviceBindingsV2()
 					.delete(
 							DeleteServiceBindingRequest.builder()
 							.serviceBindingId(serviceBindingId)
 							.build())
 					.log("stream.requestDeleteServiceBinding")
-					.after();
+					.then();
 	}
     
     public static Mono<String> requestCreateServiceBinding(CloudFoundryClient cloudFoundryClient, String appId, Mono<String> serviceInstanceId) {
 		return serviceInstanceId
 				.then(
-						serviceInstanceId1  -> cloudFoundryClient.serviceBindings()
+						serviceInstanceId1  -> cloudFoundryClient.serviceBindingsV2()
 							.create(
 									CreateServiceBindingRequest.builder()
 									.applicationId(appId)
@@ -554,7 +553,7 @@ public class CFAppManager {
 	}
     
     public static Mono<String> requestGetServiceInstanceFromBinding(CloudFoundryClient cloudFoundryClient, String serviceBindingId) {
-		return cloudFoundryClient.serviceBindings()
+		return cloudFoundryClient.serviceBindingsV2()
 					.get(
 							GetServiceBindingRequest.builder()
 							.serviceBindingId(serviceBindingId)
@@ -585,7 +584,7 @@ public class CFAppManager {
 						.serviceInstanceId(serviceInstanceId)
 						.build())
 					.log("stream.requestDeleteServiceInstance")
-					.after();
+					.then();
 	}
 	
 	public static Mono<String> requestServiceInstanceName(CloudFoundryClient cloudFoundryClient, String serviceInstanceId ) {

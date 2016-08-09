@@ -1,6 +1,10 @@
 package org.boundless.cf.servicebroker.model;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -24,6 +28,8 @@ public class Catalog {
 	@JsonProperty("services")
 	private List<ServiceDefinition> serviceDefinitions = new ArrayList<ServiceDefinition>();
 
+	private static final String BROKER_IMAGE_LOGO = "public/images/boundless-logo.png";
+	
 	public Catalog() {
 	}
 
@@ -41,7 +47,40 @@ public class Catalog {
 			this.serviceDefinitions = new ArrayList<ServiceDefinition>();
 		} else {
 			this.serviceDefinitions = serviceDefinitions;
-		} 
+		}
+		
+		String encodedImageContent = getEncodedImage();
+		this.serviceDefinitions.stream().forEach( s -> s.getMetadata().setImageUrl(encodedImageContent));
 	}
+	
+	private String getEncodedImage() {
+		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+	    int nRead;
+	    byte[] data = new byte[4096];
+        BufferedInputStream bis = new BufferedInputStream(getClass().getClassLoader().getResourceAsStream(BROKER_IMAGE_LOGO));
+        
+        try {
+			while ((nRead = bis.read(data, 0, data.length)) != -1) {
+			  buffer.write(data, 0, nRead);
+			  
+			}
+			buffer.flush();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	
+        byte[] imageBytes = buffer.toByteArray();
+        return  "data:image/png;base64," + encodeImage(imageBytes);
+	}
+	
+    public static String encodeImage(byte[] imageByteArray) {
+        return Base64.getEncoder().encodeToString(imageByteArray);
+    }
+ 
+    public static byte[] decodeImage(String imageDataString) {
+        return Base64.getDecoder().decode(imageDataString);
+    }
 	
 }

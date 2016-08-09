@@ -16,9 +16,16 @@
 
 package org.boundless.cf.servicebroker.cfutils;
 
+import java.time.Duration;
+
 import org.apache.log4j.Logger;
-import org.cloudfoundry.client.v2.domains.ListDomainsRequest;
-import org.cloudfoundry.spring.client.SpringCloudFoundryClient;
+import org.cloudfoundry.reactor.ConnectionContext;
+import org.cloudfoundry.reactor.DefaultConnectionContext;
+import org.cloudfoundry.reactor.TokenProvider;
+import org.cloudfoundry.reactor.client.ReactorCloudFoundryClient;
+import org.cloudfoundry.reactor.doppler.ReactorDopplerClient;
+import org.cloudfoundry.reactor.tokenprovider.PasswordGrantTokenProvider;
+import org.cloudfoundry.reactor.uaa.ReactorUaaClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -32,6 +39,7 @@ public class CFClientUtility {
 
     private static final Logger log = Logger.getLogger(CFClientUtility.class);
 
+    /*
     @Bean
 	SpringCloudFoundryClient cloudFoundryClient(
 			@Value("${cf.target}") String cfTarget,
@@ -51,8 +59,53 @@ public class CFClientUtility {
 				.build();
 		
 		log.info("SUCCESS!! Created CF client and got domains: " 
-				+ cfClient.domains().list(ListDomainsRequest.builder().build()).get());
+				+ cfClient.domains().list(ListDomainsRequest.builder().build()).block());
 		return cfClient;
 	}
+	*/
+    
+    @Bean
+    DefaultConnectionContext connectionContext(@Value("${cf.target}") String apiHost) {
+      
+        DefaultConnectionContext.Builder connectionContext = DefaultConnectionContext.builder()
+                .apiHost(apiHost)
+                .skipSslValidation(true)
+                .sslHandshakeTimeout(Duration.ofSeconds(30));
+
+            return connectionContext.build();
+    }
+
+    @Bean
+    PasswordGrantTokenProvider tokenProvider(@Value("${cf.admin.username}") String username,
+                                             @Value("${cf.admin.password}") String password) {
+        return PasswordGrantTokenProvider.builder()
+            .password(password)
+            .username(username)
+            .build();
+    }
+    
+    @Bean
+    ReactorCloudFoundryClient cloudFoundryClient(ConnectionContext connectionContext, TokenProvider tokenProvider) {
+        return ReactorCloudFoundryClient.builder()
+            .connectionContext(connectionContext)
+            .tokenProvider(tokenProvider)
+            .build();
+    }
+
+    @Bean
+    ReactorDopplerClient dopplerClient(ConnectionContext connectionContext, TokenProvider tokenProvider) {
+        return ReactorDopplerClient.builder()
+            .connectionContext(connectionContext)
+            .tokenProvider(tokenProvider)
+            .build();
+    }
+
+    @Bean
+    ReactorUaaClient uaaClient(ConnectionContext connectionContext, TokenProvider tokenProvider) {
+        return ReactorUaaClient.builder()
+            .connectionContext(connectionContext)
+            .tokenProvider(tokenProvider)
+            .build();
+    }
 
 }
