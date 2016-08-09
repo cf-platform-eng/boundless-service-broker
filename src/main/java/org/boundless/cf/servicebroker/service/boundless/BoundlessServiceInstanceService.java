@@ -40,10 +40,10 @@ public class BoundlessServiceInstanceService implements ServiceInstanceService {
 	private static final Logger log = Logger
 			.getLogger(BoundlessServiceInstanceService.class);
 	
-	@Value("${consul.host}")
+	@Value("${consul.host:null}")
     private String consulHost;
 	
-	@Value("${consul.port}")
+	@Value("${consul.port:8301}")
     private int consulPort;
 	
 	@Value("${contact.organization:PIVOTAL}")
