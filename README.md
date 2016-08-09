@@ -3,7 +3,9 @@
 This is an implementation of [Cloud Foundry Service Broker] (https://docs.cloudfoundry.org/services/api.html) to broker and run instances of OpenGeo Servers on Cloud Foundry. 
 
 # Prerequisites
-* The PCF install with MySQL Service
+* Bosh managed Consul to be deployed and accessible to PCF
+* App security group policies should be relaxed to allow communication with the consul ip addresses. 
+* The PCF install should allow cross-container traffic (under ERT's security configuration option)
 
 # Steps
 * Build the service broker jar file using mvn clean install (use jdk 1.8)
@@ -11,11 +13,16 @@ This is an implementation of [Cloud Foundry Service Broker] (https://docs.cloudf
 # Ignore running maven test as it would require bosh-lite to run local tests for cf-java-client
 mvn -Dmaven.test.skip=true clean install && cf push
 ```
+* Deploy consul-release (used for cluster membership between the geoservers/geowebcache insteances)
+  Follow the steps documented on [Consul-release](https://github.com/cloudfoundry-incubator/consul-release) github page.
+  Ensure 3 instances of consul are up and running with static ips.
+
 * Create mysql-service (of type : mysql) in the org/space where the Service Broker would be deployed
 ```
 cf create-service p-mysql 100mb-dev mysql-service
 ```
 * Edit the manifest.yml with correct credentials to CF.
+* Update manifest.yml with the first consul member's ip against the CONSUL_HOST in the manifest.yml
 * Deploy the service broker jar file using the manifest.yml and `cf push`
 ```
 ```
@@ -34,13 +41,14 @@ cf marketplace
 
 # output
 service          plans                               description
-OpenGeo          geolite                             OpenGeo Server Basic Profile
+OpenGeo          basic, premium*                     OpenGeo Server Basic Profile
 p-mysql          100mb-dev                           MySQL service for application development and testing
 p-rabbitmq       standard                            RabbitMQ is a robust and scalable high-performance multi-protocol messaging broker.
 p-redis          shared-vm, dedicated-vm             Redis service to provide a key-value store
 ```
 * Edit the appParamPayload.json to edit the org, space, app names or routes, memory, instances etc.
-* Create a OpenGeo GeoLite service instance on CF by passing the appParamPayload.json to configure the app details. If no json file is provided, default configurations would be used to bring up one instance of geoserver with some random generated names and routes in the same org/space where the service instance is being created.
+* Create a OpenGeo service instance on CF by passing the appParamPayload.json to configure the app details. If no json file is provided, default configurations would be used to bring up geoserver & geocache instances with some random generated names and routes in the same org/space where the service instance is being created.
+** Note: Ensure the app security group policies are relaxed to allow communication with the consul ip addresses. Also, ensure the PCF install allows cross-container traffic.
 
 ```
 #cf cs OpenGeo basic opengeo-test  -c appParamPayload.json
