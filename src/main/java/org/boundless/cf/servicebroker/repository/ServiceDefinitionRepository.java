@@ -23,4 +23,5 @@ public interface ServiceDefinitionRepository extends CrudRepository<ServiceDefin
 	
 	@Query("SELECT s.name FROM ServiceDefinition s where s.metadata.providerDisplayName LIKE CONCAT('%',:name,'%')")
 	List<String> findServiceContainingProviderName(@Param("name") String name);
+	
 }

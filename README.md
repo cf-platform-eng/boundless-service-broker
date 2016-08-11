@@ -1,6 +1,6 @@
 # Boundless Service Broker
 
-This is an implementation of [Cloud Foundry Service Broker] (https://docs.cloudfoundry.org/services/api.html) to broker and run instances of OpenGeo Servers on Cloud Foundry. 
+This is an implementation of [Cloud Foundry Service Broker] (https://docs.cloudfoundry.org/services/api.html) to broker and run instances of Boundless OpenGeo Servers on Cloud Foundry. 
 
 # Prerequisites
 * Bosh managed Consul to be deployed and accessible to PCF
@@ -33,7 +33,7 @@ cf create-service-broker boundless-service-broker testuser testuser https://boun
 ```
 * Open up access to service plans
 ```
-cf enable-service-access OpenGeo
+cf enable-service-access boundless-suite
 ```
 * Look for service offerings in marketplace
 ```
@@ -41,26 +41,26 @@ cf marketplace
 
 # output
 service          plans                               description
-OpenGeo          basic, premium*                     OpenGeo Server Basic Profile
+boundless-suite  basic, premium                             Open Source Server for Sharing Geospatial Data.
 p-mysql          100mb-dev                           MySQL service for application development and testing
 p-rabbitmq       standard                            RabbitMQ is a robust and scalable high-performance multi-protocol messaging broker.
 p-redis          shared-vm, dedicated-vm             Redis service to provide a key-value store
 ```
 * Edit the appParamPayload.json to edit the org, space, app names or routes, memory, instances etc.
-* Create a OpenGeo service instance on CF by passing the appParamPayload.json to configure the app details. If no json file is provided, default configurations would be used to bring up geoserver & geocache instances with some random generated names and routes in the same org/space where the service instance is being created.
+* Create a Boundless GeoLite service instance on CF by passing the appParamPayload.json to configure the app details. If no json file is provided, default configurations would be used to bring up one instance of geoserver with some random generated names and routes in the same org/space where the service instance is being created.
 ** Note: Ensure the app security group policies are relaxed to allow communication with the consul ip addresses. Also, ensure the PCF install allows cross-container traffic.
 
 ```
-#cf cs OpenGeo basic opengeo-test  -c appParamPayload.json
-cf create-service OpenGeo basic opengeo-test  -c appParamPayload.json
+#cf cs boundless-suite basic opengeo-test  -c appParamPayload.json
+cf create-service boundless-suite basic opengeo-test  -c appParamPayload.json
 # Check status of apps (if they are in same org/space)
 cf apps
 ```
-* Update OpenGeo service instance on CF by passing an updated appParamPayload.json to re-configure memory/instances  of app instances
+* Update Boundless OpenGeo service instance on CF by passing an updated appParamPayload.json to re-configure memory/instances  of app instances
 ```
 cf update-service opengeo-test  -c appParamPayload.json
 ```
-* Delete OpenGeo service instance on CF 
+* Delete Boundless service instance on CF 
 ```
 cf delete-service -f opengeo-test  
 # Check status of apps (if they are in same org/space)

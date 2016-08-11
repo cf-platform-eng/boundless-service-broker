@@ -1,7 +1,9 @@
 package org.boundless.cf.servicebroker.model;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.persistence.CollectionTable;
@@ -12,8 +14,8 @@ import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.MapKeyColumn;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -78,7 +80,7 @@ public class ServiceInstanceBinding {
 		this.instanceId = serviceInstanceId;
 		this.syslogDrainUrl = syslogDrainUrl;
 		this.appGuid = appGuid;
-		
+
 		this.credentials = credentials;
 	}
 
