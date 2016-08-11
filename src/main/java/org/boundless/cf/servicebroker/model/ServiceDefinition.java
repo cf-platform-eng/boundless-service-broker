@@ -1,6 +1,8 @@
 package org.boundless.cf.servicebroker.model;
 
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -12,13 +14,14 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @Entity
@@ -47,17 +50,35 @@ public class ServiceDefinition {
 	@OneToMany(mappedBy="service", orphanRemoval = true, fetch=FetchType.LAZY, cascade=CascadeType.ALL)
 	private Set<Plan> plans = new HashSet<Plan>();
 
+	// Marking the metadata as eager loading to avoid null session when we try to modify it with detach call in catalog
 	@JsonProperty("metadata")
-	@OneToOne(optional = true, orphanRemoval = true, fetch=FetchType.LAZY, cascade=CascadeType.ALL)
+	@OneToOne(optional = true, orphanRemoval = true, fetch=FetchType.EAGER, cascade=CascadeType.ALL)
 	private ServiceMetadata metadata;
 
-	public String generateId() {		
+	// Mark tags and label as transient and let it get lazily written by Catalog service 
+	@Transient 
+	@JsonSerialize
+	@JsonProperty("tags")
+	private List<String> tags = Arrays.asList( new String[] { "boundless-suite", "opengeo", "boundless"});
+	
+	@Transient 
+	@JsonSerialize
+	@JsonProperty("label")
+	private String label = "boundless";
+	
+	@Transient 
+	@JsonSerialize
+	@JsonProperty("provider")
+	private String provider = "Boundless Suite";
+
+	public String generateId() {	
 		return UUID.randomUUID().toString();
 	}
 	
 	public synchronized void generateAndSetId() {
-		if (this.id == null)
+		if (this.id == null) {
 			this.id = generateId();
+		}
 	}
 	
 	public synchronized void setId(String pk) {
@@ -109,6 +130,30 @@ public class ServiceDefinition {
 		return plans;
 	}
 	
+	public List<String> getTags() {
+		return tags;
+	}
+
+	public void setTags(List<String> tags) {
+		this.tags = tags;
+	}
+
+	public String getLabel() {
+		return label;
+	}
+
+	public void setLabel(String label) {
+		this.label = label;
+	}
+
+	public String getProvider() {
+		return provider;
+	}
+
+	public void setProvider(String provider) {
+		this.provider = provider;
+	}
+
 	public Plan findPlan(String planId) {
 		if (planId == null)
 			return null;

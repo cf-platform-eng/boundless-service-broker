@@ -16,6 +16,7 @@ import org.boundless.cf.servicebroker.model.OperationState;
 import org.boundless.cf.servicebroker.model.ServiceDefinition;
 import org.boundless.cf.servicebroker.model.ServiceInstance;
 import org.boundless.cf.servicebroker.model.ServiceInstanceLastOperation;
+import org.boundless.cf.servicebroker.model.ServiceMetadata;
 import org.boundless.cf.servicebroker.model.dto.AppMetadataDTO;
 import org.boundless.cf.servicebroker.model.dto.CreateServiceInstanceRequest;
 import org.boundless.cf.servicebroker.model.dto.DeleteServiceInstanceRequest;
@@ -24,6 +25,7 @@ import org.boundless.cf.servicebroker.repository.BoundlessAppMetadataRepository;
 import org.boundless.cf.servicebroker.repository.BoundlessServiceInstanceMetadataRepository;
 import org.boundless.cf.servicebroker.repository.BoundlessServiceInstanceRepository;
 import org.boundless.cf.servicebroker.repository.PlanRepository;
+import org.boundless.cf.servicebroker.repository.ServiceMetadataRepository;
 import org.boundless.cf.servicebroker.service.CatalogService;
 import org.boundless.cf.servicebroker.service.ServiceInstanceService;
 import org.cloudfoundry.client.CloudFoundryClient;
@@ -54,6 +56,9 @@ public class BoundlessServiceInstanceService implements ServiceInstanceService {
 	
 	@Autowired
 	CatalogService catalogService;
+	
+	@Autowired
+	ServiceMetadataRepository smRepository;
 
 	@Autowired
 	BoundlessServiceInstanceRepository serviceInstanceRepository;
@@ -145,6 +150,12 @@ public class BoundlessServiceInstanceService implements ServiceInstanceService {
 							+ request.getServiceDefinitionId());
 		}
 
+		
+		// The catalog service modified the service metadata and made it detached.
+		// Reattach the service metadata by pulling from DB instead of using the detached one 
+		ServiceMetadata metadata = smRepository.findOne(sd.getMetadata().getId());
+		sd.setMetadata(metadata);
+		
 		BoundlessServiceInstance serviceInstance = new BoundlessServiceInstance(request);	
 		serviceInstance.setCurrentOperation(ServiceInstance.CREATE_REQUEST);
 		serviceInstance.setLastOperation(new ServiceInstanceLastOperation("Provisioning", OperationState.IN_PROGRESS));
