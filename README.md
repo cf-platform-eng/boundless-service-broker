@@ -41,7 +41,7 @@ cf marketplace
 
 # output
 service          plans                               description
-boundless-suite  basic, premium                             Open Source Server for Sharing Geospatial Data.
+boundless-suite  basic, premium                      Open Source Server for Sharing Geospatial Data.
 p-mysql          100mb-dev                           MySQL service for application development and testing
 p-rabbitmq       standard                            RabbitMQ is a robust and scalable high-performance multi-protocol messaging broker.
 p-redis          shared-vm, dedicated-vm             Redis service to provide a key-value store
