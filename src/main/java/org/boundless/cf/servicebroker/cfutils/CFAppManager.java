@@ -180,8 +180,8 @@ public class CFAppManager {
         return Mono
                 .when(appId, routeId)
                 .then(tuple -> {
-                    String routeId2 = tuple.t2;
-                    String applicationId2 = tuple.t1;
+                    String routeId2 = tuple.getT2();
+                    String applicationId2 = tuple.getT1();
                     return 
 	                    Mono.delay(Duration.ofSeconds(15))
 	                    .then( l ->  checkAppStaging(cloudFoundryClient, applicationId2) )

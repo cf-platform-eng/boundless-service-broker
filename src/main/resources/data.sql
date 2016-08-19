@@ -1,8 +1,8 @@
 insert into servicemetadata(id, provider_display_name, display_name, long_description, image_url, documentation_url, support_url) values(1,'Boundless Suite', 'Boundless Suite', 'The Best For Open Source Software That Solves Enterprise Geospatial Challenges.', 'http://boundlessgeo.com/wp-content/uploads/2015/10/Boundless-new-web-logo-e1444657868290.png', 'http://boundlessgeo.com/products/opengeo-suite/', 'http://boundlessgeo.com/support/');
-insert into services (name, id, description, bindable, metadata_id) values ('boundless-suite', '58A0E4B0-DFC2-4CD8-827B-94F6E49EA7BC', 'Open Source Server for Sharing Geospatial Data.', true, 1);
+insert into services (name, id, description, bindable, metadata_id) values ('boundless-suite', 'B8E750D3-B048-493D-8E61-8F97210C8BE0', 'Open Source Server for Sharing Geospatial Data.', true, 1);
 
 -- memory & disk are in mb
-insert into planconfigs (id, geoserver_docker_uri, geocache_docker_uri, geoserver_memory, geoserver_disk, geoserver_instance, geocache_memory, geocache_disk, geocache_instance) values ('planconfigs1', 'cuttlefish/geoserver:4.9-cf-alpha', 'cuttlefish/gwc:4.8', 1536, 1536, 1, 1536, 1536, 1);
+insert into planconfigs (id, geoserver_docker_uri, geocache_docker_uri, geoserver_memory, geoserver_disk, geoserver_instance, geocache_memory, geocache_disk, geocache_instance) values ('planconfigs1', 'cuttlefish/geoserver:4.9-cf-alpha', 'cuttlefish/gwc:4.8', 2048, 2048, 1, 2048, 2048, 1);
 insert into planconfigs (id, geoserver_docker_uri, geocache_docker_uri, geoserver_memory, geoserver_disk, geoserver_instance, geocache_memory, geocache_disk, geocache_instance) values ('planconfigs2', 'cuttlefish/geoserver:4.9-cf-alpha', 'cuttlefish/gwc:4.8', 4096, 2048, 4, 4096, 2048, 2);
 
 insert into planconfig_other_attributes (planconfig_other_attrib_id, name, value) values ('planconfigs1', 'someAttributeA', 'someValue1');
@@ -24,8 +24,8 @@ insert into cost_amounts(cost_amounts_id, value, currency) values(5, 0, 'usd');
 insert into plan_metadata_bullets (plan_metadata_id, bullets) values (1, 'Free, Basic OpenGeo Service');
 insert into plan_metadata_bullets (plan_metadata_id, bullets) values (2, 'Paid, Premium OpenGeo Service');
 
-insert into plans (name, id, description, service_id, planconfig_id, metadata_id, is_free) values ('basic', '1DD7E874-E265-44F1-AD2F-676207016CC3', 'Basic Plan limited to 2GB Memory', '58A0E4B0-DFC2-4CD8-827B-94F6E49EA7BC', 'planconfigs1', 1, 1);
-insert into plans (name, id, description, service_id, planconfig_id, metadata_id, is_free) values ('premium', '26847B68-57E6-49E2-BA44-F82DCD7E46AA', 'Premium Plan limited to 4GB Memory', '58A0E4B0-DFC2-4CD8-827B-94F6E49EA7BC', 'planconfigs2', 2, 0);
+insert into plans (name, id, description, service_id, planconfig_id, metadata_id, is_free) values ('basic', '8D6F6623-D3D4-4D79-BDED-9F9BE661F15D', 'Basic Plan limited to 2GB Memory', 'B8E750D3-B048-493D-8E61-8F97210C8BE0', 'planconfigs1', 1, 1);
+insert into plans (name, id, description, service_id, planconfig_id, metadata_id, is_free) values ('premium', '407E6597-5E04-4533-A0DC-D943D7EBF5DE', 'Premium Plan limited to 4GB Memory', 'B8E750D3-B048-493D-8E61-8F97210C8BE0', 'planconfigs2', 2, 0);
 
 
 
